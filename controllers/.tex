@@ -1,0 +1,108 @@
+exports.user = async (req, res) => {
+    const token = req.headers['authorization'];
+
+    if (!token) {
+        return res.status(401).json({ message: 'No se proporcionó token.' });
+    }
+
+    jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET, async (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: 'Token inválido.' });
+        }
+
+        const usuarioId = decoded.id;
+
+        try {
+            const [user] = await pool.query('SELECT nombre, correo FROM usuarios WHERE id = ?', [usuarioId]);
+
+            if (user.length === 0) {
+                return res.status(404).json({ message: 'Usuario no encontrado.' });
+            }
+
+            res.status(200).json(user[0]);
+        } catch (error) {
+            console.error('Error al obtener la información del usuario:', error);
+            res.status(500).json({ message: 'Error en el servidor', error: error.message });
+        }
+    });
+};
+
+
+
+router.get('/user', authController.user);
+
+
+
+
+
+
+.vue
+<template>
+  <div class="perfil-container">
+    <h1>Perfil de Usuario</h1>
+    <div v-if="getuser">
+      <p><strong>Nombre:</strong> {{ user.nombre }}</p>
+      <p><strong>Correo:</strong> {{ user.correo }}</p>
+      <button class="logout-button" @click="handleLogout">Cerrar Sesión</button>
+    </div>
+    <div v-else>
+      <p>No estás autenticado.</p>
+    </div>
+  </div>
+</template>
+
+<script>
+import { mapGetters, mapActions } from 'vuex';
+import axios from 'axios';
+
+export default {
+  computed: {
+    ...mapGetters(['getUser']),
+  },
+  methods: {
+    ...mapActions(['logout']),
+    
+    async fetchUser() {
+      try {
+        const response = await axios.get('http://localhost:3000/api/auth/user', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        this.$store.commit('SET_USER', response.data);
+      } catch (error) {
+        console.error('Error al obtener la información del usuario:', error);
+        if (error.response && error.response.status === 401) {
+          this.$router.push('/login');
+        }
+      }
+    },
+
+    async handleLogout() {
+      try {
+        await this.logout();
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+      }
+    },
+  },
+  mounted() {
+    this.fetchUser();
+  },
+};
+</script>
+
+<style scoped>
+.perfil-container {
+  padding: 20px;
+}
+
+.logout-button {
+  background-color: red;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+</style>

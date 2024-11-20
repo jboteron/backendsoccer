@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+.build/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Azure specific
+.scm/
+.azure/
+
+# Temporary files
+tmp/
+temp/
